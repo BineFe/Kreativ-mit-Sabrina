@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Game</title>
+    <style>
+        .memory-game {
+            display: grid;
+            gap: 1rem;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .memory-card {
+            aspect-ratio: 1 / 1;
+            position: relative;
+            transform: scale(1);
+            transform-style: preserve-3d;
+            transition: transform 0.5s;
+        }
+
+        .memory-card.flip {
+            transform: rotateY(180deg);
+        }
+
+        .memory-card img,
+        .memory-card .back-face {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            backface-visibility: hidden;
+            border-radius: 0.5rem;
+        }
+
+        .memory-card .front-face {
+            transform: rotateY(180deg);
+        }
+
+        .memory-card .back-face {
+            background: #4caac9;
+        }
+
+        .restart-button {
+            display: block;
+            margin: 2rem auto;
+            padding: 1rem 2rem;
+            background: #4caac9;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+
+        .restart-button:hover {
+            background: #3b8a9e;
+        }
+
+        /* Layout für PCs */
+        @media (min-width: 641px) {
+            .memory-game {
+                grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+            }
+        }
+
+        /* Layout für mobile Geräte */
+        @media (max-width: 640px) {
+            .memory-game {
+                grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="memory-game">
+    <div class="memory-game"></div>
+    <button class="restart-button" onclick="restartGame()">Neustart</button>
+</div>
+
+<script>
+    const images = [
+        "https://primary.jwwb.nl/public/k/t/b/temp-cvwxliwbgvizcqtclrjd/1-standard-rdi7w8.png",
+        "https://primary.jwwb.nl/public/k/t/b/temp-cvwxliwbgvizcqtclrjd/2-standard-yxzruq.png",
+        "https://primary.jwwb.nl/public/k/t/b/temp-cvwxliwbgvizcqtclrjd/3-standard-mzcli3.png",
+        "https://primary.jwwb.nl/public/k/t/b/temp-cvwxliwbgvizcqtclrjd/4-standard-yqtk9j.png",
+        "https://primary.jwwb.nl/public/k/t/b/temp-cvwxliwbgvizcqtclrjd/5-standard-fryqcw.png",
+        "https://primary.jwwb.nl/public/k/t/b/temp-cvwxliwbgvizcqtclrjd/6-standard-ve5csh.png"
+    ];
+
+    let cardsArray = [];
+    const memoryGameContainer = document.querySelector('.memory-game');
+
+    function createCards() {
+        memoryGameContainer.innerHTML = '';
+        cardsArray = [...images, ...images];
+        cardsArray.sort(() => 0.5 - Math.random());
+
+        cardsArray.forEach((src, index) => {
+            const card = document.createElement('div');
+            card.classList.add('memory-card');
+            card.dataset.framework = src;
+
+            const frontFace = document.createElement('img');
+            frontFace.classList.add('front-face');
+            frontFace.src = src;
+
+            const backFace = document.createElement('div');
+            backFace.classList.add('back-face');
+
+            card.appendChild(frontFace);
+            card.appendChild(backFace);
+
+            memoryGameContainer.appendChild(card);
+        });
+
+        const cards = document.querySelectorAll('.memory-card');
+        cards.forEach(card => card.addEventListener('click', flipCard));
+    }
+
+    let hasFlippedCard = false;
+    let lockBoard = false;
+    let firstCard, secondCard;
+    let matchCount = 0;
+
+    function flipCard() {
+        if (lockBoard) return;
+        if (this === firstCard) return;
+
+        this.classList.add('flip');
+
+        if (!hasFlippedCard) {
+            hasFlippedCard = true;
+            firstCard = this;
+            return;
+        }
+
+        secondCard = this;
+        checkForMatch();
+    }
+
+    function checkForMatch() {
+        let isMatch = firstCard.dataset.framework === secondCard.dataset.framework;
+
+        isMatch ? disableCards() : unflipCards();
+    }
+
+    function disableCards() {
+        firstCard.removeEventListener('click', flipCard);
+        secondCard.removeEventListener('click', flipCard);
+        matchCount++;
+        if (matchCount === images.length) {
+            setTimeout(() => alert('Herzlichen Glückwunsch! Du hast das Spiel gewonnen!'), 500);
+        }
+        resetBoard();
+    }
+
+    function unflipCards() {
+        lockBoard = true;
+
+        setTimeout(() => {
+            firstCard.classList.remove('flip');
+            secondCard.classList.remove('flip');
+            resetBoard();
+        }, 1500);
+    }
+
+    function resetBoard() {
+        [hasFlippedCard, lockBoard] = [false, false];
+        [firstCard, secondCard] = [null, null];
+    }
+
+    function restartGame() {
+        createCards();
+        resetBoard();
+        matchCount = 0;
+    }
+
+    createCards();
+</script>
+
+</body>
+</html>
